@@ -24,7 +24,7 @@
 <!-- Shapes -->
 
 	<shape type="ply" id="mesh-urban_canyon_take2_3_cropped_outliers_cropped_mesh" name="mesh-urban_canyon_take2_3_cropped_outliers_cropped_mesh">
-		<string name="filename" value="urban_canyon_take2_3_cropped_outliers_cropped_mesh.ply"/>
+		<string name="filename" value="canyon.ply"/>
 		<boolean name="face_normals" value="true"/>
 		<ref id="mat-itu_concrete" name="bsdf"/>
 	</shape>
