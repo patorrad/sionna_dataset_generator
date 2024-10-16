@@ -30,7 +30,7 @@ IMAGE_FOLDER = f"images/{SCENE_NAME}"
 
 
 # Import Sionna RT components
-from sionna.rt import load_scene, Transmitter, Receiver, PlanarArray, Camera
+from sionna.rt import load_scene, Transmitter, Receiver, PlanarArray, Camera, AntennaArray, Antenna
 
 import numpy as np
 
@@ -77,20 +77,26 @@ for i in range(len(positions)):
     scene = load_scene(f"models/{SCENE_NAME}.xml")
     scene.frequency = 2.462e9
     scene.objects['urban_canyon_take2_3_cropped_outliers_cropped_mesh'].material = "concrete"
-    scene.tx_array = PlanarArray(num_rows=1,
-                            num_cols=1, #2,
-                            vertical_spacing=0.5, #0.7,
-                            horizontal_spacing=0.5,
-                            pattern="dipole", #"tr38901",
-                            polarization="V") #"VH")
+    # scene.tx_array = PlanarArray(num_rows=1,
+    #                         num_cols=1, #2,
+    #                         vertical_spacing=0.5, #0.7,
+    #                         horizontal_spacing=0.5,
+    #                         pattern="dipole", #"tr38901",
+    #                         polarization="V") #"VH")
 
-    # Configure antenna array for all receivers
-    scene.rx_array = PlanarArray(num_rows=1,
-                            num_cols=1,
-                            vertical_spacing=0.5,
-                            horizontal_spacing=0.5,
-                            pattern="dipole",
-                            polarization="V") #"cross")
+    # # Configure antenna array for all receivers
+    # scene.rx_array = PlanarArray(num_rows=1,
+    #                         num_cols=1,
+    #                         vertical_spacing=0.5,
+    #                         horizontal_spacing=0.5,
+    #                         pattern="dipole",
+    #                         polarization="V") #"cross")
+    
+    RelativeAtennas = AntennaArray(antenna=Antenna("dipole", "V"), 
+                        positions=tf.Variable([[0.0,0.0,0.0], [0.0, 1.0, 0.0], [0.0, 2.0, 0.0], [0.0, 3.0, 0.0]]))
+    
+    scene.tx_array = RelativeAtennas 
+    scene.rx_array = RelativeAtennas
 
     # Create transmitter
     tx = Transmitter(name="tx",
