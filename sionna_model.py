@@ -5,6 +5,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import sionna
 from sionna.channel.utils import subcarrier_frequencies, cir_to_ofdm_channel
 from sionna.ofdm import ResourceGrid
+from algorithim import Params, Algorithm, Capon
 
 import tensorflow as tf
 gpus = tf.config.list_physical_devices('GPU')
@@ -93,7 +94,7 @@ for i in range(len(positions)):
     #                         polarization="V") #"cross")
     
     RelativeAtennas = AntennaArray(antenna=Antenna("dipole", "V"), 
-                        positions=tf.Variable([[0.0,0.0,0.0], [0.0, 1.0, 0.0], [0.0, 2.0, 0.0], [0.0, 3.0, 0.0]]))
+                        positions=tf.Variable([[0.0, 0.0, 0.0], [0.0, -0.06, 0.0], [0.0, -0.03, 0.0], [0.0, -0.09, 0.0]]))
     
     scene.tx_array = RelativeAtennas 
     scene.rx_array = RelativeAtennas
@@ -110,7 +111,8 @@ for i in range(len(positions)):
             orientation=[0,0,0])
     scene.add(rx)
 
-    # TX points towards RX
+    # TX points towards RX    theta_r = np.squeeze(paths.theta_r)
+
     tx.look_at(rx)
     scene_loaded = time.perf_counter()
     print(f"scene load time:    {scene_loaded - start} seconds")
@@ -169,7 +171,18 @@ for i in range(len(positions)):
     # Reshape to [1, num_subcarriers]
     h_sim = tf.reshape(cir_to_ofdm_channel(frequencies, *paths_complete.cir()), [1, -1])
 
-    # scene.preview(paths=paths_diff)
+    # print(h_sim.shape)
+    # import pdb; pdb.set_trace()
+
+    # Implementing Capon Algorithim
+    print("Capon Algorthim")
+    params = Params(RelativeAtennas.positions[:, :2])
+    # channel is 155, bandwidth is 80
+
+
+    print("Evaluation: " + str(Capon(params, 155, 80, h_sim).evaluate()))
+
+    # scene.preview(paths=patFigure_1hs_diff)
 
     resolution = [480*8,270*8]
     my_cam = Camera("my_cam", position=[CENTER_X - 20, CENTER_Y - 30, CENTER_Z + 35], look_at=[CENTER_X, CENTER_Y, CENTER_Z])
@@ -190,7 +203,21 @@ for i in range(len(positions)):
     # plt.xlabel("Subcarrier index")
     # plt.ylabel("Channel gain")
     # plt.title("Channel frequency response")
-    # # plt.plot(frequencies/1e6, tf.abs(h_sim.numpy().flatten()))
+    # # plt.plot(frequencies/1e6, tf.abs(h_sim.numpy().flatten()))        # plt.figure(figsize=(8, 8))
+        # ax = plt.subplot(111, projection='polar')
+
+        # # Plot the evaluation values vs. angles
+        # ax.plot(self.theta_samples, profile_data, label="Evaluation Profile")
+
+        # # Add labels and legend
+        # ax.set_title("Evaluation Profile in Radial Plot", va='bottom')
+        # ax.set_theta_zero_location("N")  # Zero angle at the top (North)
+        # ax.set_theta_direction(-1)  # Clockwise angle direction
+
+        # # Show plot
+        # plt.legend()
+        # plt.show()
+        
     # plt.show()
 
 np.save(f"csi_readings_{SCENE_NAME}.npy", csi_readings)
