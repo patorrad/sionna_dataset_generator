@@ -203,21 +203,21 @@ class Capon(Algorithm):
         profile_norm = self.map_sigmoid(profile_dBi)
 
         # Create radial plot
-        plt.figure(figsize=(8, 8))
-        ax = plt.subplot(111, projection='polar')
+        # plt.figure(figsize=(8, 8))
+        # ax = plt.subplot(111, projection='polar')
 
-        # Plot the evaluation profile
-        ax.plot(self.theta_samples, profile_norm, label="Evaluation Profile")
+        # # Plot the evaluation profile
+        # ax.plot(self.theta_samples, profile_norm, label="Evaluation Profile")
 
 
-        # Add labels and legend
-        ax.set_title("Evaluation Profile in Radial Plot", va='bottom')
-        ax.set_theta_zero_location("N")  # Zero angle at the top (North)
-        ax.set_theta_direction(-1)  # Clockwise angle direction
+        # # Add labels and legend
+        # ax.set_title("Evaluation Profile in Radial Plot", va='bottom')
+        # ax.set_theta_zero_location("N")  # Zero angle at the top (North)
+        # ax.set_theta_direction(-1)  # Clockwise angle direction
 
-        # Show plot
-        plt.legend()
-        plt.show()
+        # # Show plot
+        # plt.legend()
+        # plt.show()
         
         Evaluation = np.array([profile_norm]) # truncated for brevity
         Evaluation = Evaluation.flatten()  # Flatten to a 1D array if it's 2D

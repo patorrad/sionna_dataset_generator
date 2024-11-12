@@ -82,9 +82,9 @@ if __name__ == "__main__":
         print(trajectories.shape)
         
         # create a visualization scene with rays, hits, and mesh
-        scene = trimesh.Scene([mesh, ray_visualize, trimesh.points.PointCloud(locations)])
+        # scene = trimesh.Scene([mesh, ray_visualize, trimesh.points.PointCloud(locations)])
 
-        scene.show()
-        # # mesh.show()
+        # scene.show()
+        # # # mesh.show()
    
     np.save("trajectories.npy", trajectories)
