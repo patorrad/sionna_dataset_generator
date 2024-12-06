@@ -31,17 +31,23 @@ def watts_to_dbm(watts):
     return 10 * np.log10(watts + epsilon) + 30
 
 trajectories = np.load('trajectories.npy')
+headings = np.load('headings.npy')
 
 print(len(trajectories[0]))
 TX_POSITION = np.array([CENTER_X, CENTER_Y, CENTER_Z])
 data = []
 
-for RX_POSITIONS in trajectories:
-    for RX_POSITION in RX_POSITIONS:
+for i in range(len(trajectories)):
+    RX_POSITIONS = trajectories[i]
+    hdg = headings[i]
+    print("HDG: " + str(hdg))
+    for j in range(len(RX_POSITIONS)):
+        RX_POSITION = RX_POSITIONS[j]
         print("RX_POSITION " + str(RX_POSITION))
         scene = load_scene(f"models/{SCENE_NAME}.xml")
         scene.frequency = 2.462e9
         scene.objects['urban_canyon_take2_3_cropped_outliers_cropped_mesh'].material = "concrete"
+        scene.synthetic_array = False
         
         RelativeAtennas = AntennaArray(antenna=Antenna("dipole", "V"), 
                             positions=tf.Variable([[0.0, 0.0, 0.0], [0.0, -0.06, 0.0], [0.0, -0.03, 0.0], [0.0, -0.09, 0.0]]))
@@ -56,9 +62,10 @@ for RX_POSITIONS in trajectories:
         scene.add(tx)
 
         # Create a receiver
+        # changing the yaw of the reciever
         rx = Receiver(name="rx",
                 position=RX_POSITION,
-                orientation=[0,0,0])
+                orientation=[hdg,0,0])
         scene.add(rx)
 
         # TX points towards RX    theta_r = np.squeeze(paths.theta_r)
@@ -92,7 +99,8 @@ for RX_POSITIONS in trajectories:
         # Implementing Capon Algorithim
         params = Params(RelativeAtennas.positions[:, :2])
         # channel is 155, bandwidth is 80
-        AOA = np.array([Capon(params, 155, 80, h_sim).evaluate()])
+        AOA=np.array([Capon(params, 155, 80, h_sim).evaluate()])
+        print(AOA)
         csi_reading = watts_to_dbm(tf.abs(h_sim.numpy().flatten()))
 
 

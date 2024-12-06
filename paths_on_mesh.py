@@ -30,7 +30,8 @@ if __name__ == "__main__":
 
     trajectories = np.empty((0,20,3))
 
-    for i in range(20):
+    for i in range(2000):
+        print(str(i)+"th loop complete.")
         cmds = [np.array([np.random.choice([1, -1]) * np.random.uniform(.2, .8), np.random.choice([1, -1]) * .01])] * 20
         # Generate trajectories
         track = []
@@ -78,13 +79,13 @@ if __name__ == "__main__":
         locations[:, 2] += 0.5
         locations_reshaped = locations.reshape(1, 20, 3)
         trajectories = np.concatenate((trajectories, locations_reshaped), axis=0)
-        
-        print(trajectories.shape)
-        
+                
         # create a visualization scene with rays, hits, and mesh
         # scene = trimesh.Scene([mesh, ray_visualize, trimesh.points.PointCloud(locations)])
 
         # scene.show()
         # # # mesh.show()
    
+    print(trajectories.shape)
     np.save("trajectories.npy", trajectories)
+    np.save("headings.npy", heading)
