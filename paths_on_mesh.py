@@ -1,6 +1,8 @@
 import numpy as np
 
 import trimesh
+from trimesh.path.entities import Line
+from trimesh.path import Path2D, Path3D
 
 from math import tan, sin, cos, sqrt
 
@@ -29,8 +31,9 @@ def move(x, dt, u, wheelbase):
 if __name__ == "__main__":
 
     trajectories = np.empty((0,20,3))
+    headings = np.empty((0,20))
 
-    for i in range(20):
+    for i in range(100):
         cmds = [np.array([np.random.choice([1, -1]) * np.random.uniform(.2, .8), np.random.choice([1, -1]) * .01])] * 20
         # Generate trajectories
         track = []
@@ -38,7 +41,7 @@ if __name__ == "__main__":
         heading = []
         sim_pos = np.array([np.random.uniform(10, 50), np.random.uniform(-5, 2), np.random.uniform(0, np.pi / 2)])
         # sim_pos = np.array([30, 5, 0])
-        for i, u in enumerate(cmds):
+        for j, u in enumerate(cmds):
             sim_pos, vel, hdg = move(sim_pos, dt/step, u, wheelbase)
             track_tmp = np.copy(sim_pos)
             track_tmp[2] = -10
@@ -77,14 +80,23 @@ if __name__ == "__main__":
         locations = locations[np.argsort(index_ray)]
         locations[:, 2] += 0.5
         locations_reshaped = locations.reshape(1, 20, 3)
-        trajectories = np.concatenate((trajectories, locations_reshaped), axis=0)
-        
-        print(trajectories.shape)
-        
-        # create a visualization scene with rays, hits, and mesh
-        scene = trimesh.Scene([mesh, ray_visualize, trimesh.points.PointCloud(locations)])
+        trajectories = np.concatenate((trajectories, locations_reshaped), axis=0) 
+        headings = np.concatenate((headings, heading.reshape(1, 20)), axis=0)       
 
-        scene.show()
-        # # mesh.show()
+        # ray_origins = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+        # ray_directions = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        # ray_visualize = trimesh.load_path(
+        #     np.hstack((ray_origins, ray_origins + ray_directions * 5.0)).reshape(-1, 2, 3),
+        #     colors=[(255, 0, 0, 255), (0, 255, 0, 255), (0, 0, 255, 255)]
+        # )
+        
+        # # create a visualization scene with rays, hits, and mesh
+        # scene = trimesh.Scene([mesh, ray_visualize, trimesh.points.PointCloud(locations)])
+
+        # scene.show()
+        # # # mesh.show()
    
-    np.save("trajectories.npy", trajectories)
+    print(f'trajectories {trajectories.shape}')
+    np.save("trajectories_test.npy", trajectories)
+    print(f'headings shape {headings.shape}')
+    np.save("headings.npy", heading)
