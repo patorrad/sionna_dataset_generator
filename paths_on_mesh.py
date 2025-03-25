@@ -33,7 +33,7 @@ if __name__ == "__main__":
     trajectories = np.empty((0,20,3))
     headings = np.empty((0,20))
 
-    for i in range(100):
+    for i in range(1000):
         cmds = [np.array([np.random.choice([1, -1]) * np.random.uniform(.2, .8), np.random.choice([1, -1]) * .01])] * 20
         # Generate trajectories
         track = []
@@ -97,6 +97,14 @@ if __name__ == "__main__":
         # # # mesh.show()
    
     print(f'trajectories {trajectories.shape}')
-    np.save("trajectories_test.npy", trajectories)
+    import os
+    file_path = "trajectories_1000.npy"
+    if os.path.exists(file_path):
+        existing_data = np.load(file_path)  # Load existing data
+        combined_data = np.concatenate((existing_data, trajectories))  # Append
+    else:
+        combined_data = trajectories  # If file doesn't exist, just save new data
+
+    np.save(file_path, combined_data)
     print(f'headings shape {headings.shape}')
     np.save("headings.npy", heading)
