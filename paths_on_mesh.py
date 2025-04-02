@@ -8,6 +8,9 @@ from math import tan, sin, cos, sqrt
 
 import matplotlib.pyplot as plt
 
+# import from file that finds all direction vectors
+import spherical_directions
+
 dt = 1.0
 wheelbase = 0.5
 cmds = [np.array([.8, np.random.choice([1, -1]) * .01])] * 20
@@ -33,7 +36,8 @@ if __name__ == "__main__":
     trajectories = np.empty((0,20,3))
     headings = np.empty((0,20))
 
-    for i in range(1000):
+    for i in range(5):
+        print(i)
         cmds = [np.array([np.random.choice([1, -1]) * np.random.uniform(.2, .8), np.random.choice([1, -1]) * .01])] * 20
         # Generate trajectories
         track = []
@@ -59,7 +63,19 @@ if __name__ == "__main__":
 
         mesh = trimesh.load_mesh("models/canyon.ply")
 
-        # create some rays
+        # Lidar
+
+        # Object to do ray- mesh queries
+        intersector = trimesh.ray.ray_pyembree.RayMeshIntersector(mesh, scale_to_box=True)
+        
+        # Generate rays pointing in all directions
+        ray_directions = spherical_directions.directions
+        for pos in track:
+            ray_origins = [pos] * len(ray_directions)
+
+            LiDAR_CP, index_ray, index_tri = intersector.intersects_location(ray_origins, ray_directions)
+            print(LiDAR_CP)
+
         ray_origins = track #np.array([[0, 0, -5], [2, 2, -10]])
         ray_directions = np.array([[0, 0, 1]]*track.shape[0])
 
@@ -74,6 +90,7 @@ if __name__ == "__main__":
         ray_visualize = trimesh.load_path(
             np.hstack((ray_origins[:1], ray_origins[:1] + ray_directions[:1])).reshape(-1, 2, 3)
         )
+
         # if locations.shape != (20, 3):
         #     import pdb; pdb.set_trace()
         
@@ -92,6 +109,31 @@ if __name__ == "__main__":
         
         # # create a visualization scene with rays, hits, and mesh
         # scene = trimesh.Scene([mesh, ray_visualize, trimesh.points.PointCloud(locations)])
+
+        # Lidar
+
+        # Object to do ray- mesh queries
+        intersector = trimesh.ray.ray_pyembree.RayMeshIntersector(mesh, scale_to_box=True)
+        
+        # Generate rays pointing in all directions
+        num_rays = 720  # Number of rays per position
+        phi = np.linspace(0, np.pi, num_rays//2)  # Elevation angle (0 to π)
+        theta = np.linspace(0, 2*np.pi, num_rays//2)  # Azimuth angle (0 to 2π)
+        theta, phi = np.meshgrid(theta, phi)
+        theta = theta.ravel()
+        phi = phi.ravel()
+
+        # Convert spherical coordinates to Cartesian coordinates
+        ray_directions = np.vstack([
+            np.sin(phi) * np.cos(theta),  # x-component
+            np.sin(phi) * np.sin(theta),  # y-component
+            np.cos(phi)                   # z-component
+        ]).T
+
+        for pos in track:
+            ray_origins = [pos] * 720
+            
+            print(intersector.intersects_location(ray_origins, ray_directions, multiple_hits=True))
 
         # scene.show()
         # # # mesh.show()
