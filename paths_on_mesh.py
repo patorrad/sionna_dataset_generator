@@ -110,31 +110,6 @@ if __name__ == "__main__":
         # # create a visualization scene with rays, hits, and mesh
         # scene = trimesh.Scene([mesh, ray_visualize, trimesh.points.PointCloud(locations)])
 
-        # Lidar
-
-        # Object to do ray- mesh queries
-        intersector = trimesh.ray.ray_pyembree.RayMeshIntersector(mesh, scale_to_box=True)
-        
-        # Generate rays pointing in all directions
-        num_rays = 720  # Number of rays per position
-        phi = np.linspace(0, np.pi, num_rays//2)  # Elevation angle (0 to π)
-        theta = np.linspace(0, 2*np.pi, num_rays//2)  # Azimuth angle (0 to 2π)
-        theta, phi = np.meshgrid(theta, phi)
-        theta = theta.ravel()
-        phi = phi.ravel()
-
-        # Convert spherical coordinates to Cartesian coordinates
-        ray_directions = np.vstack([
-            np.sin(phi) * np.cos(theta),  # x-component
-            np.sin(phi) * np.sin(theta),  # y-component
-            np.cos(phi)                   # z-component
-        ]).T
-
-        for pos in track:
-            ray_origins = [pos] * 720
-            
-            print(intersector.intersects_location(ray_origins, ray_directions, multiple_hits=True))
-
         # scene.show()
         # # # mesh.show()
    
