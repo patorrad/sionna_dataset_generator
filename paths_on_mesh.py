@@ -8,7 +8,6 @@ from math import tan, sin, cos, sqrt
 
 import matplotlib.pyplot as plt
 
-# import from file that finds all direction vectors
 import spherical_directions
 
 dt = 1.0
@@ -31,13 +30,35 @@ def move(x, dt, u, wheelbase):
     else: # moving in straight line
         return x + np.array([dist*cos(hdg), dist*sin(hdg), 0]), np.array([vel*cos(hdg), vel*sin(hdg)]), hdg
 
+def add_normal_vector(scene, origin, normal, scale=0.5, color=[0, 255, 0, 255]):  
+    """
+    Adds a normal vector as a line in the scene.
+
+    :param scene: The trimesh scene.
+    :param origin: The starting point of the normal vector.
+    :param normal: The normal vector direction.
+    :param scale: Scaling factor for visualization.
+    :param color: Color of the normal vector (default: green).
+    """
+    # Compute the endpoint of the normal vector
+    end_point = origin + normal * scale  # Scale the normal for visibility
+
+    # Create line vertices (start and end)
+    line_vertices = np.array([origin, end_point])
+    
+    # Create line entity
+    normal_line = trimesh.load_path(line_vertices, colors=color)
+
+    # Add to scene
+    scene.add_geometry(normal_line)
+
+
 if __name__ == "__main__":
 
     trajectories = np.empty((0,20,3))
     headings = np.empty((0,20))
 
-    for i in range(5):
-        print(i)
+    for i in range(1000):
         cmds = [np.array([np.random.choice([1, -1]) * np.random.uniform(.2, .8), np.random.choice([1, -1]) * .01])] * 20
         # Generate trajectories
         track = []
@@ -63,18 +84,14 @@ if __name__ == "__main__":
 
         mesh = trimesh.load_mesh("models/canyon.ply")
 
-        # Lidar
+        # create some rays
+        # ray_origins = track #np.array([[0, 0, -5], [2, 2, -10]])
+        # ray_directions = np.array([[0, 0, 1]]*track.shape[0])
 
-        # Object to do ray- mesh queries
-        intersector = trimesh.ray.ray_pyembree.RayMeshIntersector(mesh, scale_to_box=True)
-        
-        # Generate rays pointing in all directions
-        ray_directions = spherical_directions.directions
-        for pos in track:
-            ray_origins = [pos] * len(ray_directions)
-
-            LiDAR_CP, index_ray, index_tri = intersector.intersects_location(ray_origins, ray_directions)
-            print(LiDAR_CP)
+        # # run the mesh- ray test
+        # locations, index_ray, index_tri = mesh.ray.intersects_location(
+        #     ray_origins=ray_origins, ray_directions=ray_directions
+        # )          
 
         ray_origins = track #np.array([[0, 0, -5], [2, 2, -10]])
         ray_directions = np.array([[0, 0, 1]]*track.shape[0])
@@ -87,29 +104,64 @@ if __name__ == "__main__":
         if len(locations) < len(cmds) or locations.shape != (20, 3):
             continue
         # stack rays into line segments for visualization as Path3D
-        ray_visualize = trimesh.load_path(
-            np.hstack((ray_origins[:1], ray_origins[:1] + ray_directions[:1])).reshape(-1, 2, 3)
-        )
-
+        # ray_visualize = trimesh.load_path(
+        #     np.hstack((ray_origins[:1], ray_origins[:1] + ray_directions[:1])).reshape(-1, 2, 3)
+        # # 
         # if locations.shape != (20, 3):
         #     import pdb; pdb.set_trace()
         
+        # Lidar
+        
+        # Object to do ray- mesh queries
+        intersector = trimesh.ray.ray_pyembree.RayMeshIntersector(mesh, scale_to_box=True)
+             
+        for k in range(len(track)):
+            pos = track[k]
+            LiDAR_loc = locations[k]
+            # add to the z-axis since its on top of the rover
+            LiDAR_loc[2] += 0.5
+            closest, distance, index = trimesh.proximity.closest_point(mesh, [LiDAR_loc])
+            
+            nvector = mesh.face_normals[index][0]
+            print(nvector)
+
+            ray_directions = spherical_directions.create_LiDAR_direction(100, nvector)          
+            ray_origins = [LiDAR_loc] * len(ray_directions)
+
+            LiDAR_CP, LiDAR_index_ray, LiDAR_index_tri = intersector.intersects_location(ray_origins, ray_directions)
+
+            # TESTING
+            # check to make sure it works
+            scene = trimesh.Scene([mesh])
+
+            # convert all hits on mesh into np array
+            LiDAR_CP = np.array(LiDAR_CP, dtype=np.float32)
+
+            # make them all red
+            colors = np.full((len(LiDAR_CP), 4), [255, 0, 0, 255], dtype=np.uint8)
+
+            # add the current LiDAR location
+            track_point = np.array(LiDAR_loc, dtype=np.float32)  # Ensure it's a 2D array
+            hits = np.vstack([LiDAR_CP, track_point])  # Append track[i]
+
+            # add blue color for track point
+            new_color = np.array([[0, 0, 255, 255]], dtype=np.uint8)  # Blue point
+
+            # add to scene
+            blue_colors = np.vstack([colors, new_color])  # Blue point color
+            blue_point_cloud = trimesh.points.PointCloud(hits, colors=blue_colors)
+            scene.add_geometry(blue_point_cloud)
+            add_normal_vector(scene, track_point, nvector, scale=0.5, color=[[0, 255, 0, 255]])  # Green normal
+            
+            # scene.show(viewer="gl")
+    
         locations = locations[np.argsort(index_ray)]
         locations[:, 2] += 0.5
         locations_reshaped = locations.reshape(1, 20, 3)
         trajectories = np.concatenate((trajectories, locations_reshaped), axis=0) 
         headings = np.concatenate((headings, heading.reshape(1, 20)), axis=0)       
 
-        # ray_origins = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
-        # ray_directions = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        # ray_visualize = trimesh.load_path(
-        #     np.hstack((ray_origins, ray_origins + ray_directions * 5.0)).reshape(-1, 2, 3),
-        #     colors=[(255, 0, 0, 255), (0, 255, 0, 255), (0, 0, 255, 255)]
-        # )
-        
-        # # create a visualization scene with rays, hits, and mesh
-        # scene = trimesh.Scene([mesh, ray_visualize, trimesh.points.PointCloud(locations)])
-
+        # scene = trimesh.Scene([mesh, ray_visualize])
         # scene.show()
         # # # mesh.show()
    
