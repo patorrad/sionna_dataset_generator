@@ -33,7 +33,7 @@ if __name__ == "__main__":
     trajectories = np.empty((0,20,3))
     headings = np.empty((0,20))
 
-    for i in range(1000):
+    for i in range(100):
         cmds = [np.array([np.random.choice([1, -1]) * np.random.uniform(.2, .8), np.random.choice([1, -1]) * .01])] * 20
         # Generate trajectories
         track = []
@@ -57,7 +57,8 @@ if __name__ == "__main__":
         # plt.title("Robot  Trajectory")
         # plt.show()
 
-        mesh = trimesh.load_mesh("models/canyon.ply")
+        # mesh = trimesh.load_mesh("models/canyon.ply")
+        mesh = trimesh.load_mesh("models/lunar_mesh_ex.ply")
 
         # create some rays
         ray_origins = track #np.array([[0, 0, -5], [2, 2, -10]])
@@ -91,14 +92,15 @@ if __name__ == "__main__":
         # )
         
         # # create a visualization scene with rays, hits, and mesh
-        # scene = trimesh.Scene([mesh, ray_visualize, trimesh.points.PointCloud(locations)])
+        scene = trimesh.Scene([mesh, ray_visualize, trimesh.points.PointCloud(locations)])
 
-        # scene.show()
+        scene.show()
+        # import pdb; pdb.set_trace()
         # # # mesh.show()
    
     print(f'trajectories {trajectories.shape}')
     import os
-    file_path = "trajectories_1000.npy"
+    file_path = "trajectories_lunar_mesh_ex.npy"
     if os.path.exists(file_path):
         existing_data = np.load(file_path)  # Load existing data
         combined_data = np.concatenate((existing_data, trajectories))  # Append
