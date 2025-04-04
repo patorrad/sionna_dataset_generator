@@ -125,6 +125,7 @@ if __name__ == "__main__":
             nvector = mesh.face_normals[index][0]
             print(nvector)
 
+            # by default is 2D, to make 3D chane to (100, nvector, False) as an example
             ray_directions = spherical_directions.create_LiDAR_direction(100, nvector)          
             ray_origins = [LiDAR_loc] * len(ray_directions)
 
