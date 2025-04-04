@@ -129,7 +129,8 @@ if __name__ == "__main__":
             ray_directions = spherical_directions.create_LiDAR_direction(100, nvector)          
             ray_origins = [LiDAR_loc] * len(ray_directions)
 
-            LiDAR_CP, LiDAR_index_ray, LiDAR_index_tri = intersector.intersects_location(ray_origins, ray_directions)
+            index_tri, index_ray, LiDAR_CP = intersector.intersects_id(ray_origins, ray_directions, multiple_hits = False, return_locations = True)
+            # print(LiDAR_CP)
 
             # TESTING
             # check to make sure it works
