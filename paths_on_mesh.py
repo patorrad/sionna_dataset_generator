@@ -82,7 +82,8 @@ if __name__ == "__main__":
         # plt.title("Robot  Trajectory")
         # plt.show()
 
-        mesh = trimesh.load_mesh("models/canyon.ply")
+        # mesh = trimesh.load_mesh("models/canyon.ply")
+        mesh = trimesh.load_mesh("models/lunar_mesh_ex.ply")
 
         # create some rays
         # ray_origins = track #np.array([[0, 0, -5], [2, 2, -10]])
@@ -155,7 +156,7 @@ if __name__ == "__main__":
             scene.add_geometry(blue_point_cloud)
             add_normal_vector(scene, track_point, nvector, scale=0.5, color=[[0, 255, 0, 255]])  # Green normal
             
-            # scene.show(viewer="gl")
+            scene.show(viewer="gl")
     
         locations = locations[np.argsort(index_ray)]
         locations[:, 2] += 0.5
@@ -169,7 +170,7 @@ if __name__ == "__main__":
    
     print(f'trajectories {trajectories.shape}')
     import os
-    file_path = "trajectories_1000.npy"
+    file_path = "trajectories_lunar_mesh_ex.npy"
     if os.path.exists(file_path):
         existing_data = np.load(file_path)  # Load existing data
         combined_data = np.concatenate((existing_data, trajectories))  # Append
