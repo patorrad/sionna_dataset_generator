@@ -132,7 +132,6 @@ if __name__ == "__main__":
 
             # Total PINN-style loss
             loss = lambda_sim * loss_sim + lambda_theory * loss_theory
-            
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
