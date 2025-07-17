@@ -58,7 +58,7 @@ if __name__ == "__main__":
     trajectories = np.empty((0,20,3))
     headings = np.empty((0,20))
 
-    for i in range(1000):
+    for i in range(1):
         cmds = [np.array([np.random.choice([1, -1]) * np.random.uniform(.2, .8), np.random.choice([1, -1]) * .01])] * 20
         # Generate trajectories
         track = []
@@ -108,55 +108,59 @@ if __name__ == "__main__":
         # stack rays into line segments for visualization as Path3D
         ray_visualize = trimesh.load_path(
             np.hstack((ray_origins[:1], ray_origins[:1] + ray_directions[:1])).reshape(-1, 2, 3))
-        # # 
-        # if locations.shape != (20, 3):
-        #     import pdb; pdb.set_trace()
+        # 
+        if locations.shape != (20, 3):
+            import pdb; pdb.set_trace()
         
-        # # Lidar
-        # # Object to do ray- mesh queries
-        # intersector = trimesh.ray.ray_pyembree.RayMeshIntersector(mesh, scale_to_box=True)
+        # Lidar
+        # Object to do ray- mesh queries
+        intersector = trimesh.ray.ray_pyembree.RayMeshIntersector(mesh, scale_to_box=True)
              
-        # for k in range(len(track)):
-        #     pos = track[k]
-        #     LiDAR_loc = locations[k]
-        #     # add to the z-axis since its on top of the rover
-        #     LiDAR_loc[2] += 0.5
-        #     closest, distance, index = trimesh.proximity.closest_point(mesh, [LiDAR_loc])
+        for k in range(len(track)):
+            pos = track[k]
+            LiDAR_loc = locations[k]
+            # add to the z-axis since its on top of the rover
+            LiDAR_loc[2] += 2.5
+            closest, distance, index = trimesh.proximity.closest_point(mesh, [LiDAR_loc])
             
-        #     nvector = mesh.face_normals[index][0]
-        #     print(nvector)
+            nvector = mesh.face_normals[index][0]
+            print(nvector)
 
-        #     # by default is 2D, to make 3D chane to (100, nvector, False) as an example
-        #     ray_directions = spherical_directions.create_LiDAR_direction(100, nvector)          
-        #     ray_origins = [LiDAR_loc] * len(ray_directions)
+            # by default is 2D, to make 3D chane to (100, nvector, False) as an example
+            nvector = np.array([0.,0.,-1.])
+            print(f'nvector {nvector}')
+            ray_directions = spherical_directions.create_LiDAR_direction(1200, nvector, False)          
+            ray_origins = [LiDAR_loc] * len(ray_directions)
 
-        #     index_tri, index_ray, LiDAR_CP = intersector.intersects_id(ray_origins, ray_directions, multiple_hits = False, return_locations = True)
-        #     # print(LiDAR_CP)
+            index_tri, index_ray, LiDAR_CP = intersector.intersects_id(ray_origins, ray_directions, multiple_hits = False, return_locations = True)
+            origins = np.array(ray_origins)
+            dist = np.linalg.norm(LiDAR_CP - origins[LiDAR_CP.shape[0],:], axis=1)
+            LiDAR_CP = LiDAR_CP[(dist < 50) & (dist > 10), :]
+            # import pdb; pdb.set_trace()
+            # TESTING
+            # check to make sure it works
+            scene = trimesh.Scene([mesh])
 
-        #     # TESTING
-        #     # check to make sure it works
-        #     scene = trimesh.Scene([mesh])
+            # convert all hits on mesh into np array
+            LiDAR_CP = np.array(LiDAR_CP, dtype=np.float32)
 
-        #     # convert all hits on mesh into np array
-        #     LiDAR_CP = np.array(LiDAR_CP, dtype=np.float32)
+            # make them all red
+            colors = np.full((len(LiDAR_CP), 4), [255, 0, 0, 255], dtype=np.uint8)
 
-        #     # make them all red
-        #     colors = np.full((len(LiDAR_CP), 4), [255, 0, 0, 255], dtype=np.uint8)
+            # add the current LiDAR location
+            track_point = np.array(LiDAR_loc, dtype=np.float32)  # Ensure it's a 2D array
+            hits = np.vstack([LiDAR_CP, track_point])  # Append track[i]
 
-        #     # add the current LiDAR location
-        #     track_point = np.array(LiDAR_loc, dtype=np.float32)  # Ensure it's a 2D array
-        #     hits = np.vstack([LiDAR_CP, track_point])  # Append track[i]
+            # add blue color for track point
+            new_color = np.array([[0, 0, 255, 255]], dtype=np.uint8)  # Blue point
 
-        #     # add blue color for track point
-        #     new_color = np.array([[0, 0, 255, 255]], dtype=np.uint8)  # Blue point
-
-        #     # add to scene
-        #     blue_colors = np.vstack([colors, new_color])  # Blue point color
-        #     blue_point_cloud = trimesh.points.PointCloud(hits, colors=blue_colors)
-        #     scene.add_geometry(blue_point_cloud)
-        #     add_normal_vector(scene, track_point, nvector, scale=0.5, color=[[0, 255, 0, 255]])  # Green normal
+            # add to scene
+            blue_colors = np.vstack([colors, new_color])  # Blue point color
+            blue_point_cloud = trimesh.points.PointCloud(hits, colors=blue_colors)
+            scene.add_geometry(blue_point_cloud)
+            add_normal_vector(scene, track_point, nvector, scale=0.5, color=[[0, 255, 0, 255]])  # Green normal
             
-        #     scene.show(viewer="gl")
+            scene.show(viewer="gl")
     
         locations = locations[np.argsort(index_ray)]
         locations[:, 2] += 0.5
@@ -169,15 +173,25 @@ if __name__ == "__main__":
         # # # mesh.show()
         print(f'trajectories {trajectories.shape}')
    
-    print(f'trajectories {trajectories.shape}')
-    import os
-    file_path = "trajectories_lunar_mesh_ex.npy"
-    if os.path.exists(file_path):
-        existing_data = np.load(file_path)  # Load existing data
-        combined_data = np.concatenate((existing_data, trajectories))  # Append
-    else:
-        combined_data = trajectories  # If file doesn't exist, just save new data
+    # print(f'trajectories {trajectories.shape}')
+    # import os
+    # file_path = "trajectories_lunar_mesh_ex.npy"
+    # if os.path.exists(file_path):
+    #     existing_data = np.load(file_path)  # Load existing data
+    #     combined_data = np.concatenate((existing_data, trajectories))  # Append
+    # else:
+    #     combined_data = trajectories  # If file doesn't exist, just save new data
 
-    np.save(file_path, combined_data)
+    # np.save(file_path, combined_data)
     # print(f'headings shape {headings.shape}')
     # np.save("headings.npy", heading)
+
+    # file_path = "lidar.npy"
+    # if os.path.exists(file_path):
+    #     existing_data = np.load(file_path, allow_pickle=True)  # Load existing data
+    #     combined_data = np.concatenate((existing_data, lidar))  # Append
+    # else:
+    #     combined_data = lidar  # If file doesn't exist, just save new data
+
+    # print(f'LiDAR shape {lidar.shape}')
+    # np.save("lidar.npy", combined_data)

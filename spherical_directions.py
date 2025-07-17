@@ -68,5 +68,5 @@ def show_plot(directions):
     
     plt.show()
 
-show_plot(create_LiDAR_direction(100, [ 0, 0.5,  1]))
-show_plot(create_LiDAR_direction(100, [ 0, 0.5,  1], False))
+# show_plot(create_LiDAR_direction(100, [ 0, 0.5,  1]))
+show_plot(create_LiDAR_direction(100, [ 0, 0.,  1], False))
